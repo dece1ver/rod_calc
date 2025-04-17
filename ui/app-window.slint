@@ -1,0 +1,150 @@
+import { Button, VerticalBox, LineEdit, GroupBox, SpinBox, HorizontalBox } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+
+    in-out property <string> max_rod_length;
+    in-out property <string> tail;
+    in-out property <string> parts_count;
+    in-out property <string> part_length;
+    in-out property <int> remainings_count: 2;
+    
+    in-out property <string> simple_result;
+    in-out property <string> complicated_result;
+    in-out property <string> all_equal_result;
+
+    in-out property<string> status_text;
+
+    title: "Калькулятор прутов";
+
+    callback calculate();
+    VerticalBox {
+        HorizontalBox {
+            padding: 0;
+            spacing: 0;
+            VerticalBox {
+                spacing: 0;
+                padding: 0;
+                HorizontalBox {
+                    Text {
+                        text: "Макимальная длина прута:";
+                        width: 180px;
+                        vertical-alignment: center;
+                    }
+                    LineEdit {
+                        input-type: number;
+                        text <=> max_rod_length;
+                        width: 120px;
+                        placeholder-text: "мм";
+                    }
+                }
+                HorizontalBox {
+                    Text {
+                        text: "Остаток на захват:";
+                        width: 180px;
+                        vertical-alignment: center;
+                    }
+                    LineEdit {
+                        input-type: number;
+                        text <=> tail;
+                        width: 120px;
+                        placeholder-text: "мм";
+                    }
+                }
+                HorizontalBox {
+                    Text {
+                        text: "Размер партии";
+                        width: 180px;
+                        vertical-alignment: center;
+                    }
+                    LineEdit {
+                        input-type: number;
+                        text <=> parts_count;
+                        width: 120px;
+                        placeholder-text: "шт";
+                    }
+                }
+                HorizontalBox {
+                    Text {
+                        text: "Размер заготовки";
+                        width: 180px;
+                        vertical-alignment: center;
+                    }
+                    LineEdit {
+                        input-type: number;
+                        text <=> part_length;
+                        width: 120px;
+                        placeholder-text: "мм";
+                    }
+                }
+                HorizontalBox {
+                    Text {
+                        text: "Количество остаточных прутов";
+                        width: 180px;
+                        vertical-alignment: center;
+                    }
+                    SpinBox {
+                        value <=> root.remainings_count;
+                        width: 120px;
+                        minimum: 1;
+                        
+                    }
+                }
+            }
+        
+            HorizontalBox {
+                padding: 0;
+                GroupBox {
+                    title: "Самый простой";
+                    min-width: 250px;
+                    Rectangle {
+                        border-color: #444444;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        Text {
+                            text: root.simple_result;
+                        }
+                    }
+                }
+        
+                GroupBox {
+                    title: "Красота";
+                    min-width: 250px;
+                    Rectangle {
+                        border-color: #444444;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        Text {
+                            text: root.complicated_result;
+                        }
+                    }
+                }
+        
+                GroupBox {
+                    title: "Все одинаковые";
+                    min-width: 250px;
+                    Rectangle {
+                        border-color: #444444;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        Text {
+                            text: root.all_equal_result;
+                        }
+                    }
+                }
+            }
+        }
+        Button {
+            text: "Посчитать";
+            clicked => {
+                root.calculate();
+            }
+        }
+
+        Text { 
+            text: status_text; 
+            vertical-alignment: center;
+            wrap: TextWrap.word-wrap; 
+            color: #b00; 
+        }
+    }
+}
