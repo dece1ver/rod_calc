@@ -10,32 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-windows:
+  build:
+    name: Publish binaries
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: x86_64-pc-windows-gnu
-        profile: minimal
-        override: true
-
-    - name: Build binary
-      run: cargo build --release
-
-    - name: Prepare artifact
+    - uses: actions/checkout@v3
+    - name: Build
+      id: build
       run: |
-        mkdir artifact
-        copy target\release\rod_calc.exe artifact\
-
-    - name: Upload to Release
-      if: github.event_name == 'release'
-      uses: ncipollo/release-action@v1
+        cargo build --release
+        $file_version = (Get-Item ./target/release/rot_calc.exe).VersionInfo.FileVersion
+        "VERSION=$file_version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
       with:
-        artifacts: artifact/rod_calc.exe
-        tag: ${{ github.event.release.tag_name }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/rot_calc.exe
+        asset_name: rot_calc.exe
+        tag: ${{ steps.build.outputs.VERSION }}
+        overwrite: true
+        body: "release"
