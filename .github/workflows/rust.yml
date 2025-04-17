@@ -26,12 +26,12 @@ jobs:
         override: true
 
     - name: Build binary
-      run: cargo build --release --target x86_64-pc-windows-gnu
+      run: cargo build --release
 
     - name: Prepare artifact
       run: |
         mkdir artifact
-        copy target\x86_64-pc-windows-gnu\release\rod_calc.exe artifact\
+        copy target\release\rod_calc.exe artifact\
 
     - name: Upload to Release
       if: github.event_name == 'release'
