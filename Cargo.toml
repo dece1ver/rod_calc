@@ -1,5 +1,5 @@
 [package]
-name = "rot_calc"
+name = "rod_calc"
 version = "1.0.0"
 edition = "2024"
 
@@ -15,7 +15,7 @@ winres = "0.1"
 [package.metadata.winres]
 ProductName = "Rod Calculator"
 FileDescription = "Калькулятор прутов"
-OriginalFilename = "rot_calc.exe"
+OriginalFilename = "rod_calc.exe"
 LegalCopyright = "dece1ver © 2025"
 
 [profile.release]

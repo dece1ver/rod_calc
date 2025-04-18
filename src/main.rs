@@ -201,9 +201,6 @@ fn calc_complicated(cfg: &Config) -> SharedString {
 }
 
 fn main() -> Result<(), slint::PlatformError> {
-    #[cfg(windows)]
-    embed_windows_resources();
-
     let ui = AppWindow::new()?;
     ui.on_calculate({
         let ui_handle = ui.as_weak();

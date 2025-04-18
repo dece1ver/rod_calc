@@ -4014,7 +4014,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rot_calc"
+name = "rod_calc"
 version = "1.0.0"
 dependencies = [
  "slint",
