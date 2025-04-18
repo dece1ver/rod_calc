@@ -1,4 +1,4 @@
-name: Rust
+name: Build and Release (Windows)
 
 on:
   push:
@@ -11,23 +11,45 @@ env:
 
 jobs:
   build:
-    name: Publish binaries
+    name: Build and publish
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      id: build
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get version from EXE
+      id: version
       run: |
         cargo build --release
         $file_version = (Get-Item ./target/release/rod_calc.exe).VersionInfo.FileVersion
-        "VERSION=$file_version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v2
+        "version=$file_version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Create Git Tag if missing
+      run: |
+        $tag = "v${{ steps.version.outputs.version }}"
+        git fetch --tags
+        if (-not (git tag -l $tag)) {
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag $tag
+          git push origin $tag
+        }
+
+    - name: Create or update GitHub Release
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/rod_calc.exe
-        asset_name: rod_calc.exe
-        tag: ${{ steps.build.outputs.VERSION }}
-        overwrite: true
-        body: "release"
+        tag_name: v${{ steps.version.outputs.version }}
+        name: v${{ steps.version.outputs.version }}
+        body: "Автоматический релиз"
+        draft: false
+        prerelease: false
+        token: ${{ secrets.RELEASE_TOKEN }}
+
+    - name: Upload .exe to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: v${{ steps.version.outputs.version }}
+        files: target/release/rod_calc.exe
+        token: ${{ secrets.RELEASE_TOKEN }}
