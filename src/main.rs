@@ -126,28 +126,47 @@ fn calc_all_equal(cfg: &Config) -> SharedString {
 fn calc_complicated(cfg: &Config) -> SharedString {
     let max_per = (cfg.max_rod - cfg.leftover) / cfg.part_len;
 
-    let total_full_rods_needed = cfg.parts / max_per; 
-    let remaining_parts = cfg.parts % max_per;
-    
+    if cfg.remainings <= 0 || cfg.parts <= max_per {
+        return calc_simple(cfg);
+    }
 
-    let full_rods = if remaining_parts > 0 {
-        if total_full_rods_needed >= cfg.remainings {
-            total_full_rods_needed - cfg.remainings + 1
-        } else {
-            0
-        }
-    } else {
-        if total_full_rods_needed > cfg.remainings {
-            total_full_rods_needed - cfg.remainings
-        } else {
-            total_full_rods_needed
-        }
-    };
-    
-    let parts_for_remaining_rods = cfg.parts - full_rods * max_per;
-    
+    let total_rods_needed = (cfg.parts + max_per - 1) / max_per;
+
+    if total_rods_needed <= cfg.remainings {
+        let parts_per_rod = (cfg.parts + cfg.remainings - 1) / cfg.remainings;
+        let rod_length = parts_per_rod * cfg.part_len + cfg.leftover;
+
+        let total_mat = cfg.remainings * rod_length;
+        let total_left = cfg.remainings * cfg.leftover;
+
+        let out = format!(
+            "- {} прут{} по {} мм ({} детал{} с прута)\nОбщий расход материала: {} мм\nОбщий остаток: {} мм",
+            cfg.remainings,
+            rod_suffix(cfg.remainings),
+            rod_length,
+            parts_per_rod,
+            part_suffix(parts_per_rod),
+            total_mat,
+            total_left
+        );
+
+        return SharedString::from(out) + &formula(cfg.part_len, cfg.leftover, cfg.max_rod);
+    }
+
+    let full_rods = total_rods_needed - cfg.remainings;
+
+    let parts_on_full_rods = full_rods * max_per;
+
+    if parts_on_full_rods >= cfg.parts {
+        return calc_simple(cfg);
+    }
+
+    let remaining_parts = cfg.parts - parts_on_full_rods;
+
+    let parts_per_remaining_rod = (remaining_parts + cfg.remainings - 1) / cfg.remainings;
+
     let mut out = String::new();
-    
+
     if full_rods > 0 {
         out += &format!(
             "- {} прут{} по {} мм ({} детал{} с прута)\n",
@@ -158,90 +177,33 @@ fn calc_complicated(cfg: &Config) -> SharedString {
             part_suffix(max_per)
         );
     }
-    
-    if parts_for_remaining_rods > 0 {
-        let needed_remaining_rods = if parts_for_remaining_rods <= max_per {
-            1 
-        } else {
-            cfg.remainings
-        };
-        
-        if needed_remaining_rods == 1 {
-            out += &format!(
-                "- 1 прут по {} мм ({} детал{} с прута)\n",
-                parts_for_remaining_rods * cfg.part_len + cfg.leftover,
-                parts_for_remaining_rods,
-                part_suffix(parts_for_remaining_rods)
-            );
-        } else {
-            let parts_per_rod = (parts_for_remaining_rods + needed_remaining_rods - 1) / needed_remaining_rods;
-            let full_remaining_rods = parts_for_remaining_rods / parts_per_rod;
-            let last_rod_parts = parts_for_remaining_rods % parts_per_rod;
-            
-            if full_remaining_rods > 0 {
-                out += &format!(
-                    "- {} прут{} по {} мм ({} детал{} с прута)\n",
-                    full_remaining_rods,
-                    rod_suffix(full_remaining_rods),
-                    parts_per_rod * cfg.part_len + cfg.leftover,
-                    parts_per_rod,
-                    part_suffix(parts_per_rod)
-                );
-            }
-            
-            if last_rod_parts > 0 {
-                out += &format!(
-                    "- 1 прут по {} мм ({} детал{} с прута)\n",
-                    last_rod_parts * cfg.part_len + cfg.leftover,
-                    last_rod_parts,
-                    part_suffix(last_rod_parts)
-                );
-            }
-        }
-    }
 
-    let mut total_mat = 0;
-    let mut total_left = 0;
+    let remaining_rod_length = parts_per_remaining_rod * cfg.part_len + cfg.leftover;
+    out += &format!(
+        "- {} прут{} по {} мм ({} детал{} с прута)\n",
+        cfg.remainings,
+        rod_suffix(cfg.remainings),
+        remaining_rod_length,
+        parts_per_remaining_rod,
+        part_suffix(parts_per_remaining_rod)
+    );
 
-    if full_rods > 0 {
-        total_mat += full_rods * (max_per * cfg.part_len + cfg.leftover);
-        total_left += full_rods * cfg.leftover;
-    }
+    let total_mat =
+        full_rods * (max_per * cfg.part_len + cfg.leftover) + cfg.remainings * remaining_rod_length;
+    let total_left = (full_rods + cfg.remainings) * cfg.leftover;
 
-    if parts_for_remaining_rods > 0 {
-        let needed_remaining_rods = if parts_for_remaining_rods <= max_per {
-            1
-        } else {
-            cfg.remainings
-        };
-        
-        if needed_remaining_rods == 1 {
-            total_mat += parts_for_remaining_rods * cfg.part_len + cfg.leftover;
-            total_left += cfg.leftover;
-        } else {
-            let parts_per_rod = (parts_for_remaining_rods + needed_remaining_rods - 1) / needed_remaining_rods;
-            let full_remaining_rods = parts_for_remaining_rods / parts_per_rod;
-            let last_rod_parts = parts_for_remaining_rods % parts_per_rod;
-            
-            total_mat += full_remaining_rods * (parts_per_rod * cfg.part_len + cfg.leftover);
-            total_left += full_remaining_rods * cfg.leftover;
-            
-            if last_rod_parts > 0 {
-                total_mat += last_rod_parts * cfg.part_len + cfg.leftover;
-                total_left += cfg.leftover;
-            }
-        }
-    }
-    
     out += &format!(
         "Общий расход материала: {} мм\nОбщий остаток: {} мм",
         total_mat, total_left
     );
-    
+
     SharedString::from(out) + &formula(cfg.part_len, cfg.leftover, cfg.max_rod)
 }
 
 fn main() -> Result<(), slint::PlatformError> {
+    #[cfg(windows)]
+    embed_windows_resources();
+
     let ui = AppWindow::new()?;
     ui.on_calculate({
         let ui_handle = ui.as_weak();
