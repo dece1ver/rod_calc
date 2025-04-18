@@ -32,9 +32,12 @@ jobs:
         if (-not (git tag -l $tag)) {
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag $tag
-          git push origin $tag
+          git config --global credential.helper manager
+          git remote set-url origin https://github.com/${{ github.repository }}.git
+          git push https://github.com/${{ github.repository }} --tags
         }
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
     - name: Create or update GitHub Release
       uses: softprops/action-gh-release@v1
